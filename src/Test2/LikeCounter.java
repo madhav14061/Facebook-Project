@@ -103,6 +103,9 @@ public class LikeCounter extends HttpServlet
     		System.out.println("Access Token is :"+access_token);
     		System.out.println("YOLO");
     	}
+    	BufferedReader br1 = new BufferedReader(new InputStreamReader(System.in));
+
+    	
     	System.out.println("PLEASE ENTER THE PERCENTAGE OF POSTS YOU WANT TO PREDICT LIKES FOR");
     	Scanner in2= new Scanner(System.in);
     	Integer perc = in2.nextInt();
@@ -168,6 +171,7 @@ public class LikeCounter extends HttpServlet
     	i=0;
     	int predic = (perc*sum)/100;
     	int j2=0;
+    	int page1posts = 0;
        while(true)
 //    	for(i=0;i<3;i++)
 	     {	
@@ -188,7 +192,9 @@ public class LikeCounter extends HttpServlet
         	            {
         	            	break;
         	            }
-        	            
+        	            if(i==1){
+	            			page1posts = post.size();
+	            		}
         	            JSONObject pagingposts = (JSONObject) jsonObject.get("paging");
         	            for(int k=0;k<post.size();k++)
         	            {
@@ -209,6 +215,7 @@ public class LikeCounter extends HttpServlet
 							{
         	            		likes = (JSONObject) post2.get("likes");
         	            		likedata = (JSONArray) likes.get("data");
+        	            		
         	            		for(int j=0;j<likedata.size();j++)
         	            		{
         	            			JSONObject likedata2 = (JSONObject) likedata.get(j);
@@ -406,8 +413,8 @@ public class LikeCounter extends HttpServlet
         }
         for (Entry<String, Integer> entry : chepppl.entrySet())
         {
-        	System.out.println(entry.getKey()+"----------->"+entry.getValue());
-//        	System.out.println(entry.getKey()+"----------->"+((double) entry.getValue()/ (double) page0posts)*100);
+//        	System.out.println(entry.getKey()+"----------->"+entry.getValue());
+        	System.out.println(entry.getKey()+"----------->"+((double) entry.getValue()/ (double) page1posts)*100);
         }
         
         System.out.println(statusHashMap.toString());

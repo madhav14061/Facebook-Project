@@ -41,7 +41,15 @@ public class LikeCounter extends HttpServlet
 	public static HashMap<String, ArrayList<Integer>> photoHashMap = new HashMap<String, ArrayList<Integer>>();
 	public static HashMap<String, ArrayList<Integer>> linkHashMap = new HashMap<String, ArrayList<Integer>>();
 	public static HashMap<String, ArrayList<Integer>> videoHashMap = new HashMap<String, ArrayList<Integer>>();
-
+	public static int statusavg;
+	public static int videoavg;
+	public static int linkavg;
+	public static int photoavg;
+	public static int statuses;
+	public static int photos;
+	public static int links;
+	public static int videos;
+	
 	public static HashMap <String,Integer> chepppl = new HashMap<String,Integer>(); 
 	public String changeStringToNormal(String data)
 	{
@@ -95,8 +103,12 @@ public class LikeCounter extends HttpServlet
     		System.out.println("Access Token is :"+access_token);
     		System.out.println("YOLO");
     	}
+    	System.out.println("PLEASE ENTER THE PERCENTAGE OF POSTS YOU WANT TO PREDICT LIKES FOR");
+    	Scanner in2= new Scanner(System.in);
+    	Integer perc = in2.nextInt();
     	String page = "https://graph.facebook.com/me/posts?fields=type,message,story,likes{name},id,created_time&limit=10&key=value&" + access_token;
        // URLEncoder.encode(page,"UTF")
+    	String page2=page;
     	ArrayList<Integer> st = new ArrayList<Integer>();
     	ArrayList<Integer> ph = new ArrayList<Integer>();
     	ArrayList<Integer> vid = new ArrayList<Integer>();
@@ -104,7 +116,59 @@ public class LikeCounter extends HttpServlet
     	System.out.println(page);
     	PrintWriter out = response.getWriter();
     	int i=0;
-        while(true)
+    	int sum=0;
+    	while(true){
+    		try 
+        	{
+        		System.out.println("Page"+i);
+        		i++;
+        				URL oracle = new URL(page);
+        	            // read the json file
+	            		BufferedReader in = new BufferedReader(new InputStreamReader(oracle.openStream()));
+        	            JSONParser jsonParser = new JSONParser();
+        	            JSONObject jsonObject = (JSONObject) jsonParser.parse(in);
+        	            
+        	            
+
+        	            JSONArray post= (JSONArray) jsonObject.get("data");
+        	            if(post.isEmpty())
+        	            {
+        	            	break;
+        	            }
+        	            sum = sum + post.size();
+        	            JSONObject pagingposts = (JSONObject) jsonObject.get("paging");
+        	            if(pagingposts.containsKey("next"))
+        	            {
+        	            	page = (String) pagingposts.get("next");
+        	            	System.out.println("page->"+page);
+//        	            	page.replaceAll("%7B", "{");
+//        	            	page.replaceAll("%7b", "{");
+//        	            	page.replaceAll("%7D", "}");
+//        	            	page.replaceAll("%7d", "}");
+        	            	String tr = URLEncoder.encode(page, "UTF-8");
+        	            	System.out.println("tr = "+tr);
+//        	            	page.replaceAll(regex, replacement);
+        	            	System.out.println(page);
+        	            	
+        	            	String k =changeStringToNormal(page);
+        	            	page = k;
+        	            }
+        	            else
+        	            {
+        	            	break;
+        	            }
+        	            
+        	}catch(Exception E){
+        		E.printStackTrace();
+        	}
+    	}
+    	
+    	System.out.println("The Number Of Posts is "+ sum);
+    	page = page2;
+    	i=0;
+    	int predic = (perc*sum)/100;
+    	int j2=0;
+       while(true)
 //    	for(i=0;i<3;i++)
 	     {	
         	try 
@@ -149,7 +213,9 @@ public class LikeCounter extends HttpServlet
         	            		{
         	            			JSONObject likedata2 = (JSONObject) likedata.get(j);
         	            			String x = (String) likedata2.get("id");
-        	            			
+        	            			if(j2>predic)
+        	            			{
+
         	            			if(type.equals("status"))
         	            				idStatus.add(x);
         	            			if(type.equals("photo"))
@@ -158,7 +224,7 @@ public class LikeCounter extends HttpServlet
         	            				idLink.add(x);
         	            			if(type.equals("video"))
         	            				idLink.add(x);
-        	            			
+        	            			}
         	            			
         	            			if(i==1)
         	            			{
@@ -177,18 +243,42 @@ public class LikeCounter extends HttpServlet
         	            		//	System.out.println(x + " " + j);
         	            		}
         	            		JSONObject paging = (JSONObject) likes.get("paging");
-        	            		JSONObject next1 = null;
+        	            		//JSONObject next1 = null;
         	            		
         	            		if(paging.containsKey("next"))
         	            		{
         	            			likes2  = GetPageLikes((String)paging.get("next") , i, type, message);
         	            		}
         	            	}
+							int totalLikes;
         	            	if(likedata!=null)
-        	            		System.out.println(likedata.size() + likes2);
-        	            	else
+        	            		{
+        	            			totalLikes = likedata.size() + likes2;
+        	            			System.out.println(totalLikes);
+        	            		}
+        	            	else{
+        	            		totalLikes = 0;
         	            		System.out.println("0");
+        	            	}
+        	            		
         	            	
+        	            	if(type.equals("status")){
+        	            		statusavg = statusavg + totalLikes;
+        	            		statuses++;
+        	            	}
+        	            	else if(type.equals("video")){
+        	            		videoavg = videoavg + totalLikes;
+        	            		videos++;
+        	            	}
+        	            	else if(type.equals("link")){
+        	            		linkavg = linkavg + totalLikes;
+        	            		links++;
+        	            	}
+        	            	else if(type.equals("photo")){
+        	            		photoavg = photoavg + totalLikes;
+        	            		photos++;
+        	            		System.out.println(photoavg/photos);
+        	            	}
         	            	int size = 0;
         	            	if(!idStatus.isEmpty())
         	            		size = idStatus.size();
@@ -210,13 +300,13 @@ public class LikeCounter extends HttpServlet
         	            		message = message.replace("(", " ");
         	            		message = message.replace(")", " ");
         	            		message = message.replace("?", " ");
-//        	            		message.replaceAll("-", "");
+        	            		message = message.replace("-", " ");
         	            		String words[] = message.split(" ");
         	            		ArrayList<Integer> get;
         	            		ArrayList<String> keepingTrack= new ArrayList<String>();
         	            		for(String w : words)
         	            		{
-        	            			if(w.length()>2 && !keepingTrack.contains(w))
+        	            			if(w.length()>2 && !keepingTrack.contains(w) && j2>predic)
         	            			{
         	            				keepingTrack.add(w);
         	            				if(type.equals("status"))
@@ -283,17 +373,17 @@ public class LikeCounter extends HttpServlet
         	            			}
         	            		}
         	            	}
-        	            	
+        	            	j2++;
 //        	            	}
         	            }
         	            if(pagingposts.containsKey("next"))
         	            {
         	            	page = (String) pagingposts.get("next");
         	            	System.out.println("page->"+page);
-//        	            	page.replaceAll("%7B", "{");
-//        	            	page.replaceAll("%7b", "{");
-//        	            	page.replaceAll("%7D", "}");
-//        	            	page.replaceAll("%7d", "}");
+        	            	page = page.replace("%7B", "{");
+        	            	page = page.replace("%7b", "{");
+        	            	page = page.replace("%7D", "}");
+        	            	page = page.replace("%7d", "}");
         	            	String tr = URLEncoder.encode(page, "UTF-8");
         	            	System.out.println("tr = "+tr);
 //        	            	page.replaceAll(regex, replacement);
@@ -327,16 +417,138 @@ public class LikeCounter extends HttpServlet
         System.out.println(linkHashMap.toString());
         System.out.println("####################");
         System.out.println(videoHashMap.toString());
+        page = page2;
+        j2=0;
+        int flag=0;
+        statusavg = statusavg/statuses;
+        photoavg = photoavg/photos;
+        linkavg = linkavg/links;
+        videoavg = videoavg/videos;
+        while(true & flag==0)
+//        	for(i=0;i<3;i++)
+    	     {	
+            	try 
+            	{
+            		
+            				URL oracle = new URL(page);
+            	            // read the json file
+    	            		BufferedReader in = new BufferedReader(new InputStreamReader(oracle.openStream()));
+            	            JSONParser jsonParser = new JSONParser();
+            	            JSONObject jsonObject = (JSONObject) jsonParser.parse(in);
+            	            
+            	            
+
+            	            JSONArray post= (JSONArray) jsonObject.get("data");
+            	            if(post.isEmpty())
+            	            {
+            	            	break;
+            	            }
+            	            int likes2 = 0;
+            	            JSONObject pagingposts = (JSONObject) jsonObject.get("paging");
+            	            for(int k=0;k<post.size();k++)
+            	            {
+            	            	if(j2>predic){
+            	            		flag=1;
+            	            		break;
+            	            	}
+            	            	JSONObject post2 = (JSONObject) post.get(k);
+            	            	String type = (String) post2.get("type");
+            	            	String message = "";
+            	            	if(post2.containsKey("message"))
+            	            		message = (String) post2.get("message");
+            	              Predictor p = new Predictor();
+            	              int predict = p.predictLikes(message, type);
+            	              System.out.println("Predicted Likes: "+predict);
+            	              JSONObject likes = null;
+            	              JSONArray likedata = null;
+            	              if(post2.containsKey("likes"))
+  							{
+          	            		likes = (JSONObject) post2.get("likes");
+          	            		likedata = (JSONArray) likes.get("data");
+  							
+            	            
+            	            	  JSONObject paging = (JSONObject) likes.get("paging");
+							
+      	            		//JSONObject next1 = null;
+      	            		
+      	            		if(paging.containsKey("next"))
+      	            		{
+      	            			likes2 = GetPageLikes((String)paging.get("next") , i, type, message);
+      	            		}
+  							}
+      	            		if(likedata!=null)
+        	            		{
+      	            			System.out.println("LIKES = " + (likedata.size() + likes2));
+        	            		}
+        	            	else
+        	            		System.out.println("LIKES = 0");
+      	            		
+      	            		 
+      	            		j2++;
+            	              
+            	            	
+            	            }
+            	            if(flag==1){
+            	            	break;
+            	            }
+            	            if(pagingposts.containsKey("next"))
+             	            {
+             	            	page = (String) pagingposts.get("next");
+             	            	System.out.println("page->"+page);
+//             	            	page.replaceAll("%7B", "{");
+//             	            	page.replaceAll("%7b", "{");
+//             	            	page.replaceAll("%7D", "}");
+//             	            	page.replaceAll("%7d", "}");
+             	            	String tr = URLEncoder.encode(page, "UTF-8");
+             	            	System.out.println("tr = "+tr);
+//             	            	page.replaceAll(regex, replacement);
+             	            	System.out.println(page);
+             	            	
+             	            	String k2 =changeStringToNormal(page);
+             	            	page = k2;
+             	            }
+             	            else
+             	            {
+             	            	break;
+             	            }
+            	}catch(Exception E){
+            		E.printStackTrace();
+            	}
+    	     }
+    	     
+        System.out.println("DO YOU WANT TO ADD A NEW POST BASED ON THE FIRST "+ perc + " PERCENTAGE OF YOUR POSTS");
+        Scanner n2 = new Scanner(System.in);
+        String n3 = n2.nextLine();
+        if(n3.toLowerCase().equals("yes")){
+        	System.out.println("Type Of Post?");
+        	n3 = n2.nextLine();
+        	if(n3.toLowerCase().equals("status")){
+        		Predictor p = new Predictor();
+        		System.out.println("Enter the status");
+        		String s = n2.nextLine();
+        		System.out.println(p.predictLikes(s,n3));
+        	}
+        	else if(n3.toLowerCase().equals("photo")){
+        		Predictor p = new Predictor();
+        		System.out.println("Enter the caption");
+        		String s = n2.nextLine();
+        		System.out.println(p.predictLikes(s,n3));
+        	}
+        	else if(n3.toLowerCase().equals("link")){
+        		Predictor p = new Predictor();
+        		System.out.println("Enter the status");
+        		String s = n2.nextLine();
+        		System.out.println(p.predictLikes(s,n3));
+        	}
+        	else if(n3.toLowerCase().equals("video")){
+        		Predictor p = new Predictor();
+        		System.out.println("Enter the caption");
+        		String s = n2.nextLine();
+        		System.out.println(p.predictLikes(s,n3));
+        	}
+        }
         
-        
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("Enter a string :");
-        String inp=br.readLine();
-        System.out.print("Enter the type (status/video/photo/link):");
-        String tp=br.readLine();
-        Predictor p = new Predictor();
-        int predict = p.predictLikes(inp, tp);
-        System.out.println("Predicted Likes: "+predict);
+
 
 
     }
